@@ -1,0 +1,6 @@
+(* Source files for the sml-dice library. *)
+$(SML_LIB)/basis/basis.mlb
+../sml-prng/prng.sig
+../sml-prng/prng.sml
+dice.sig
+dice.sml
