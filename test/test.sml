@@ -67,6 +67,29 @@ struct
       val () = check "min value = 5" (case d3d6p2 of (v,_)::_ => v = 5 | _ => false)
       val (num2, den2) = Dice.expectedValue (valOf (Dice.parse "3d6+2"))
       val () = check "E[3d6+2]=25/2" (num2 * 2 = den2 * 25)
+
+      val () = section "parse overflow (bounded, portable)"
+      (* Out-of-range numbers must return the documented failure (NONE)
+         and NEVER raise Overflow. On 32-bit MLton int, values > 2^31-1
+         would raise via unchecked Int.fromString; on arbitrary-precision
+         Poly/ML they would silently succeed. Both break the parser contract
+         and cross-compiler determinism. Portable limit: 2147483647. *)
+      (* isNone must be forced under the exception guard so a raise fails the
+         check rather than escaping the whole suite. *)
+      fun parsesToNone s = ((Dice.parse s) = NONE) handle _ => false
+      val () = check "parse huge count '9999999999d6' = NONE (no raise)"
+                 (parsesToNone "9999999999d6")
+      val () = check "parse huge sides 'd9999999999' = NONE (no raise)"
+                 (parsesToNone "d9999999999")
+      (* Just over 2^31-1 = 2147483648 *)
+      val () = check "parse '2147483648d6' just over 2^31 = NONE (no raise)"
+                 (parsesToNone "2147483648d6")
+      (* Boundary: exactly 2^31-1 = 2147483647 must still parse (in range) *)
+      val () = check "parse '2147483647' at limit still parses"
+                 (isSome (Dice.parse "2147483647"))
+      (* Normal small case must remain unaffected *)
+      val () = check "parse '3d6' still parses (normal case)"
+                 (isSome (Dice.parse "3d6"))
     in
       Harness.run ()
     end

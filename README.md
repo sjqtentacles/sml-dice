@@ -6,6 +6,8 @@ Pure Standard ML **RPG dice notation**: parser (`2d6`, `3d6+2`, `4d6kh3`), exact
 
 No clock, no I/O, no non-determinism. Byte-identical under **MLton** and **Poly/ML**.
 
+Numeric parsing is precision-safe and portable: dice numbers are converted through `IntInf.fromString` and bounds-checked against the fixed limit `2147483647` (2^31-1), so out-of-range counts/sides (e.g. `9999999999d6`) return `NONE` on both compilers instead of raising `Overflow` on 32-bit MLton or silently succeeding on 63-bit Poly/ML.
+
 ## Running `make example` prints:
 
 ```
@@ -63,7 +65,7 @@ make test && make test-poly && make example
 
 ## Tests
 
-**19 deterministic checks**: parse round-trips, 2d6 distribution (1,6,1 counts for 2,7,12), E[3d6]=21/2, E[3d6+2]=25/2, Const distribution, seeded roll determinism.
+**24 deterministic checks**: parse round-trips, 2d6 distribution (1,6,1 counts for 2,7,12), E[3d6]=21/2, E[3d6+2]=25/2, Const distribution, seeded roll determinism, and out-of-range parse boundary cases (`>2^31-1` counts/sides return `NONE`, never raise, on both compilers).
 
 ## License
 

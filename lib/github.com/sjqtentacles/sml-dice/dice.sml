@@ -16,6 +16,14 @@ struct
   fun skipSpaces cs =
     case cs of #" " :: rest => skipSpaces rest | _ => cs
 
+  (* Portable, fixed upper bound: 2^31-1. Dice counts/sides are semantically
+     small (a billion-sided die is invalid input), so we keep `int` and reject
+     out-of-range numbers rather than overflow. We convert via IntInf.fromString
+     (never overflows) and bounds-check against this literal — NOT Int.maxInt
+     (NONE on Poly/ML) and NOT `IntInf.toInt ... handle Overflow` (only overflows
+     on MLton). Both alternatives reintroduce MLton/Poly divergence. *)
+  val maxIntLit : IntInf.int = 2147483647  (* 2^31 - 1 *)
+
   fun parseInt cs =
     let
       fun takeDigits [] acc = (List.rev acc, [])
@@ -25,7 +33,12 @@ struct
       val (digits, rest) = takeDigits cs []
     in
       if null digits then NONE
-      else SOME (valOf (Int.fromString (String.implode digits)), rest)
+      else
+        (case IntInf.fromString (String.implode digits) of
+           NONE => NONE                       (* not a number (defensive) *)
+         | SOME big =>
+             if big > maxIntLit then NONE      (* out of range -> documented failure *)
+             else SOME (IntInf.toInt big, rest))
     end
 
   fun parseTerm cs =

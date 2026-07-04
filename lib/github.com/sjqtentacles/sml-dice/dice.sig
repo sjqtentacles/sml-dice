@@ -11,7 +11,11 @@ sig
     | KeepLow  of expr * int (* kl k: keep k lowest  results (disadvantage) *)
 
   (* ---- Parser ---- *)
-  (* Parse a dice expression string like "2d6", "3d6+2", "2d20kh1", "4d6kh3" *)
+  (* Parse a dice expression string like "2d6", "3d6+2", "2d20kh1", "4d6kh3".
+     Returns NONE for malformed input. Numeric fields (counts/sides/keep-k) are
+     bounded: any value exceeding 2147483647 (2^31-1) is rejected with NONE
+     rather than raising Overflow, so results are portable and identical under
+     32-bit MLton and 63-bit Poly/ML. Never raises. *)
   val parse : string -> expr option
 
   (* ---- Exact probability distribution ---- *)
